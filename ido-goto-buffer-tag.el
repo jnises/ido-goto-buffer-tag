@@ -4,7 +4,7 @@
 
 (require 'cl)
 
-(defun overlay-to-marker (overlay)
+(defun ido-goto-buffer-tag-overlay-to-marker (overlay)
   "convert an overlay to a marker, or just pass through if not an overlay"
   (if (overlayp overlay)
       (let ((marker (make-marker)))
@@ -12,7 +12,7 @@
     ;; else
     overlay))
 
-(defun ido-goto-buffer-tag-filter (tag)
+(defun ido-goto-buffer-tag-semantic-filter (tag)
   "filters tags
 return t if the tag should be included"
   (not (eq (semantic-tag-class tag) 'include)))
@@ -35,13 +35,13 @@ return t if the tag should be included"
           :initial-value ()))
 
 (defun ido-goto-buffer-tag-assoc-from-semantic (tags)
-  "Convert a list of semantic tags to a list of key value pairs"
+  "Convert a semantic tag list to a list of key value pairs"
   (mapcan ; mapcar that concatenates
    (lambda (tag)
      (let* ((tagname (ido-goto-buffer-tag-get-name tag))
             (result 
              (list (cons tagname 
-                         (overlay-to-marker (semantic-tag-overlay tag)))))
+                         (ido-goto-buffer-tag-overlay-to-marker (semantic-tag-overlay tag)))))
             (members 
              (semantic-tag-type-members tag)))
        (when members
@@ -56,13 +56,39 @@ return t if the tag should be included"
            (when (> (length subtags) 0)
              (setq result (append result subtags)))))
        result))
-   (remove-if-not 'ido-goto-buffer-tag-filter tags)))
+   (remove-if-not 'ido-goto-buffer-tag-semantic-filter tags)))
+
+(defun ido-goto-buffer-tag-assoc-from-imenu (tags &optional name) 
+  "Convert the imenu tags in this buffer to an assoc list of (name . marker)"
+  (reduce (lambda (accum tag)
+            (let ((value (cdr tag))
+                  (completename (concat name (when name "::") (car tag))))
+              (cond
+               ((listp value)
+                (append accum (ido-goto-buffer-tag-assoc-from-imenu value completename)))
+               ((and (numberp value) (< value 0))
+                ;; probably something like *rescan*
+                accum)
+               (t
+                ;; assume it is an overlay or marker
+                (append accum (list (cons completename (ido-goto-buffer-tag-overlay-to-marker value))))))))
+          tags :initial-value nil))
+
+(defun ido-goto-buffer-tag-get-assoc ()
+  "Get an assoc list of tags for this buffer. Using semantic if possible, otherwise imenu."
+  (let ((semantic-tags (ido-goto-buffer-tag-assoc-from-semantic (semantic-fetch-tags))))
+    (if semantic-tags
+        semantic-tags
+      ;; else
+      ;; TODO is this too slow?
+      (setq imenu--index-alist nil)
+      (ido-goto-buffer-tag-assoc-from-imenu (imenu--make-index-alist)))))
 
 (defun ido-goto-buffer-tag ()
   "use ido completion to select which tag in this buffer to jump to"
   (interactive)
   (let ((tags (ido-goto-buffer-tag-get-unique-tag 
-               (ido-goto-buffer-tag-assoc-from-semantic (semantic-fetch-tags)))))
+               (ido-goto-buffer-tag-get-assoc))))
     (goto-char (cdr (assoc (ido-completing-read "Symbol? " (mapcar (lambda (pair)
                                                                      (car pair))
                                                                    tags)) tags)))))
