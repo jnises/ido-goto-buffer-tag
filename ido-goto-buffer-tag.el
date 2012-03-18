@@ -3,6 +3,9 @@
 ;; (when (require 'ido-goto-buffer-tag nil t) (global-set-key (kbd "C-c i") 'ido-goto-buffer-tag))
 
 (require 'cl)
+(require 'semantic)
+(require 'imenu)
+(require 'ido)
 
 (defun ido-goto-buffer-tag-overlay-to-marker (overlay)
   "convert an overlay to a marker, or just pass through if not an overlay"
