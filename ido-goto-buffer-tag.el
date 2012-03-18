@@ -76,6 +76,7 @@ return t if the tag should be included"
 
 (defun ido-goto-buffer-tag-get-assoc ()
   "Get an assoc list of tags for this buffer. Using semantic if possible, otherwise imenu."
+  ;; TODO should trim common prefixes
   (let ((semantic-tags (ido-goto-buffer-tag-assoc-from-semantic (semantic-fetch-tags))))
     (if semantic-tags
         semantic-tags
