@@ -34,36 +34,38 @@ return t if the tag should be included"
               (append result (list (cons uniquename (cdr entry))))))
           tags
           :initial-value ()))
-  
+
+(defun ido-goto-buffer-tag-assoc-from-semantic (tags)
+  "Convert a list of semantic tags to a list of key value pairs"
+  (mapcan ; mapcar that concatenates
+   (lambda (tag)
+     (let ((tagname (ido-goto-buffer-tag-get-name tag)))
+       (let ((result 
+              (list (cons tagname 
+                          (overlay-to-marker (semantic-tag-overlay tag))))))
+         (let ((members 
+                (semantic-tag-type-members tag)))
+           (when members
+             (let ((subtags (mapcar (lambda (symbol)
+                                      (cons 
+                                       (concat 
+                                        tagname 
+                                        "::" 
+                                        (car symbol)) 
+                                       (cdr symbol)))
+                                    (ido-goto-buffer-tag-assoc-from-semantic members))))
+               (when (> (length subtags) 0)
+                 (setq result (append result subtags))))))
+         result)))
+   (remove-if-not 'ido-goto-buffer-tag-filter tags)))
+
 (defun ido-goto-buffer-tag ()
   "use ido completion to select which tag in this buffer to jump to"
   (interactive)
-  (flet ((gettags (tags)
-                  (mapcan ; mapcar that concatenates
-                   (lambda (tag)
-                     (let ((tagname (ido-goto-buffer-tag-get-name tag)))
-                       (let ((result 
-                              (list (cons tagname 
-                                          (overlay-to-marker (semantic-tag-overlay tag))))))
-                         (let ((members 
-                                (semantic-tag-type-members tag)))
-                           (when members
-                             (let ((subtags (mapcar (lambda (symbol)
-                                                      (cons 
-                                                       (concat 
-                                                        tagname 
-                                                        "::" 
-                                                        (car symbol)) 
-                                                       (cdr symbol)))
-                                                    (gettags members))))
-                               (when (> (length subtags) 0)
-                                 (setq result (append result subtags))))))
-                         result)))
-                   (remove-if-not 'ido-goto-buffer-tag-filter tags))
-                  ))
-    (let ((tags (ido-goto-buffer-tag-get-unique-tag (gettags (semantic-fetch-tags)))))
-      (goto-char (cdr (assoc (ido-completing-read "Symbol? " (mapcar (lambda (pair)
-                                                                       (car pair))
-                                                                     tags)) tags))))))
+  (let ((tags (ido-goto-buffer-tag-get-unique-tag 
+               (ido-goto-buffer-tag-assoc-from-semantic (semantic-fetch-tags)))))
+    (goto-char (cdr (assoc (ido-completing-read "Symbol? " (mapcar (lambda (pair)
+                                                                     (car pair))
+                                                                   tags)) tags)))))
 
 (provide 'ido-goto-buffer-tag)
