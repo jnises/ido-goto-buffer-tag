@@ -1,3 +1,4 @@
+;; Author: Joel Nises
 ;; to use do something like:
 ;; (add-to-list 'load-path "~/.emacs.d/el/ido-goto-buffer-tag/")
 ;; (when (require 'ido-goto-buffer-tag nil t) (global-set-key (kbd "C-c i") 'ido-goto-buffer-tag))
