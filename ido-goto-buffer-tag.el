@@ -38,24 +38,24 @@ return t if the tag should be included"
   "Convert a list of semantic tags to a list of key value pairs"
   (mapcan ; mapcar that concatenates
    (lambda (tag)
-     (let ((tagname (ido-goto-buffer-tag-get-name tag)))
-       (let ((result 
-              (list (cons tagname 
-                          (overlay-to-marker (semantic-tag-overlay tag))))))
-         (let ((members 
-                (semantic-tag-type-members tag)))
-           (when members
-             (let ((subtags (mapcar (lambda (symbol)
-                                      (cons 
-                                       (concat 
-                                        tagname 
-                                        "::" 
-                                        (car symbol)) 
-                                       (cdr symbol)))
-                                    (ido-goto-buffer-tag-assoc-from-semantic members))))
-               (when (> (length subtags) 0)
-                 (setq result (append result subtags))))))
-         result)))
+     (let* ((tagname (ido-goto-buffer-tag-get-name tag))
+            (result 
+             (list (cons tagname 
+                         (overlay-to-marker (semantic-tag-overlay tag)))))
+            (members 
+             (semantic-tag-type-members tag)))
+       (when members
+         (let ((subtags (mapcar (lambda (symbol)
+                                  (cons 
+                                   (concat 
+                                    tagname 
+                                    "::" 
+                                    (car symbol)) 
+                                   (cdr symbol)))
+                                (ido-goto-buffer-tag-assoc-from-semantic members))))
+           (when (> (length subtags) 0)
+             (setq result (append result subtags)))))
+       result))
    (remove-if-not 'ido-goto-buffer-tag-filter tags)))
 
 (defun ido-goto-buffer-tag ()
