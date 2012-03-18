@@ -94,8 +94,6 @@ return t if the tag should be included"
   (interactive)
   (let ((tags (ido-goto-buffer-tag-get-unique-tag 
                (ido-goto-buffer-tag-get-assoc))))
-    (goto-char (cdr (assoc (ido-completing-read "Symbol? " (mapcar (lambda (pair)
-                                                                     (car pair))
-                                                                   tags)) tags)))))
+    (goto-char (cdr (assoc (ido-completing-read "Symbol? " (mapcar #'car tags)) tags)))))
 
 (provide 'ido-goto-buffer-tag)
