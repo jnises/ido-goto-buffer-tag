@@ -15,8 +15,7 @@
 (defun ido-goto-buffer-tag-filter (tag)
   "filters tags
 return t if the tag should be included"
-  (and ;(not (semantic-tag-get-attribute tag :prototype-flag))
-       (not (eq (semantic-tag-class tag) 'include))))
+  (not (eq (semantic-tag-class tag) 'include)))
 
 (defun ido-goto-buffer-tag-get-name (tag)
   "Get the name that identifies tag."
